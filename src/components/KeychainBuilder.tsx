@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import SavedKeychains from './SavedKeychains';
 
 interface SlotItem {
   id: number;
@@ -137,11 +139,35 @@ function Slot({ title, options, selectedIndex, onPrev, onNext, color }: SlotProp
   );
 }
 
+interface SavedKeychain {
+  id: string;
+  carabiner: string;
+  pendant: string;
+  color: string;
+  material: string;
+  price: number;
+  date: string;
+  carabinerIndex: number;
+  pendantIndex: number;
+  colorIndex: number;
+  materialIndex: number;
+}
+
 export default function KeychainBuilder() {
   const [carabinerIndex, setCarabinerIndex] = useState(0);
   const [pendantIndex, setPendantIndex] = useState(0);
   const [colorIndex, setColorIndex] = useState(0);
   const [materialIndex, setMaterialIndex] = useState(0);
+  const [savedKeychains, setSavedKeychains] = useState<SavedKeychain[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const saved = localStorage.getItem('savedKeychains');
+    if (saved) {
+      setSavedKeychains(JSON.parse(saved));
+    }
+  }, []);
 
   const totalPrice = 
     carabinerOptions[carabinerIndex].price +
@@ -156,6 +182,85 @@ export default function KeychainBuilder() {
 
   const handleNext = (current: number, setter: (n: number) => void, length: number) => {
     setter(current < length - 1 ? current + 1 : 0);
+  };
+
+  const handleSave = () => {
+    const newKeychain: SavedKeychain = {
+      id: Date.now().toString(),
+      carabiner: carabinerOptions[carabinerIndex].emoji,
+      pendant: pendantOptions[pendantIndex].emoji,
+      color: colorOptions[colorIndex].emoji + ' ' + colorOptions[colorIndex].name,
+      material: materialOptions[materialIndex].emoji + ' ' + materialOptions[materialIndex].name,
+      price: totalPrice,
+      date: new Date().toLocaleDateString('ru-RU'),
+      carabinerIndex,
+      pendantIndex,
+      colorIndex,
+      materialIndex,
+    };
+
+    const updated = [...savedKeychains, newKeychain];
+    setSavedKeychains(updated);
+    localStorage.setItem('savedKeychains', JSON.stringify(updated));
+    
+    toast({
+      title: '✨ Брелок сохранён!',
+      description: 'Теперь ты можешь найти его в сохранённых',
+    });
+  };
+
+  const handleShare = async () => {
+    const config = {
+      carabiner: carabinerOptions[carabinerIndex].name,
+      pendant: pendantOptions[pendantIndex].name,
+      color: colorOptions[colorIndex].name,
+      material: materialOptions[materialIndex].name,
+      price: totalPrice,
+    };
+
+    const text = `Смотри какой брелок я создал! 🎀\n\n${config.carabiner} + ${config.pendant}\nЦвет: ${config.color}\nМатериал: ${config.material}\nЦена: ${config.price} ₽`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        toast({
+          title: '🎉 Поделился!',
+          description: 'Отправил дизайн друзьям',
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: '📋 Скопировано!',
+        description: 'Описание брелока в буфере обмена',
+      });
+    }
+  };
+
+  const handleLoad = (keychain: SavedKeychain) => {
+    setCarabinerIndex(keychain.carabinerIndex);
+    setPendantIndex(keychain.pendantIndex);
+    setColorIndex(keychain.colorIndex);
+    setMaterialIndex(keychain.materialIndex);
+    setShowSaved(false);
+    
+    toast({
+      title: '✅ Загружено!',
+      description: 'Дизайн брелока восстановлен',
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    const updated = savedKeychains.filter(k => k.id !== id);
+    setSavedKeychains(updated);
+    localStorage.setItem('savedKeychains', JSON.stringify(updated));
+    
+    toast({
+      title: '🗑️ Удалено',
+      description: 'Брелок удалён из сохранённых',
+    });
   };
 
   return (
@@ -276,18 +381,74 @@ export default function KeychainBuilder() {
                 </div>
               </div>
 
-              <Button 
-                size="lg" 
-                className="w-full gap-2 shadow-xl hover:shadow-2xl hover:scale-105 transition-all text-lg py-6 rounded-2xl"
-                style={{ background: 'linear-gradient(135deg, #FFB5E8 0%, #E5CCFF 100%)' }}
-              >
-                <Icon name="ShoppingCart" size={22} />
-                Добавить в корзину
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  size="lg" 
+                  className="w-full gap-2 shadow-xl hover:shadow-2xl hover:scale-105 transition-all text-lg py-6 rounded-2xl"
+                  style={{ background: 'linear-gradient(135deg, #FFB5E8 0%, #E5CCFF 100%)' }}
+                >
+                  <Icon name="ShoppingCart" size={22} />
+                  Добавить в корзину
+                </Button>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleSave}
+                    className="gap-2 rounded-xl border-2 hover:scale-105 transition-all"
+                  >
+                    <Icon name="Heart" size={20} />
+                    Сохранить
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleShare}
+                    className="gap-2 rounded-xl border-2 hover:scale-105 transition-all"
+                  >
+                    <Icon name="Share2" size={20} />
+                    Поделиться
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {savedKeychains.length > 0 && (
+        <div className="mt-16 max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text">
+                Сохранённые брелоки 💾
+              </h3>
+              <p className="text-muted-foreground text-sm mt-1">
+                Всего создано: {savedKeychains.length}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowSaved(!showSaved)}
+              className="gap-2 rounded-xl hover:scale-105 transition-all"
+            >
+              <Icon name={showSaved ? 'ChevronUp' : 'ChevronDown'} size={20} />
+              {showSaved ? 'Свернуть' : 'Показать'}
+            </Button>
+          </div>
+          
+          {showSaved && (
+            <div className="animate-fade-in">
+              <SavedKeychains
+                keychains={savedKeychains}
+                onLoad={handleLoad}
+                onDelete={handleDelete}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
