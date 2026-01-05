@@ -6,35 +6,35 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 330 100% 98%;
+    --foreground: 340 80% 25%;
 
-    --card: 220 13% 18%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 340 80% 25%;
 
-    --popover: 220 13% 18%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 80% 25%;
 
-    --primary: 263 70% 75%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 340 82% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 263 55% 65%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 270 75% 85%;
+    --secondary-foreground: 340 80% 25%;
 
-    --muted: 220 13% 25%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 330 100% 96%;
+    --muted-foreground: 340 30% 55%;
 
-    --accent: 263 70% 75%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 200 80% 75%;
+    --accent-foreground: 340 80% 25%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 25%;
-    --input: 220 13% 25%;
-    --ring: 263 70% 75%;
+    --border: 330 50% 90%;
+    --input: 330 50% 90%;
+    --ring: 340 82% 67%;
 
-    --radius: 1rem;
+    --radius: 1.5rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -99,8 +99,10 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     font-family: "Inter", sans-serif;
+    background: linear-gradient(135deg, #fff5f7 0%, #ffe5ec 50%, #e5deff 100%);
+    background-attachment: fixed;
   }
 
   h1,
